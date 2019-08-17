@@ -1,5 +1,3 @@
-const types = [];
-
 const isInt = n => n % 1 === 0;
 
 const graphType = obj => {
@@ -19,25 +17,26 @@ const graphType = obj => {
 
 const capitalize = word => `${word.charAt(0).toUpperCase()}${word.slice(1)}`;
 
-const createType = (name, obj, spaces) => {
+const createType = (name, obj, spaces, types) => {
   const indent = ' '.repeat(spaces);
 
   let newType = `type ${name} {\n`;
-  Object.keys(obj).forEach(
-    key => (newType += `${indent}${convertToGraphDSL(key, obj[key])}\n`)
-  );
+  Object.keys(obj).forEach(key => {
+    const result = convertToGraphDSL(key, obj[key], spaces, types);
+    newType += `${indent}${result}\n`;
+  });
   newType = `${newType}}\n`;
   types.push(newType);
 };
 
-const convertToGraphDSL = (name, obj, spaces = 2) => {
+const convertToGraphDSL = (name, obj, spaces, types) => {
   const type = graphType(obj);
   if (type.includes('OBJECT')) {
     let newName = capitalize(name);
     if (type === 'OBJECT') {
-      createType(newName, obj, spaces);
+      createType(newName, obj, spaces, types);
     } else if (type === '[OBJECT]') {
-      createType(newName, obj[0], spaces);
+      createType(newName, obj[0], spaces, types);
       newName = `[${newName}]`;
     }
     return `${name}: ${newName}`;
@@ -46,8 +45,9 @@ const convertToGraphDSL = (name, obj, spaces = 2) => {
 };
 
 const buildSchema = ({ typeDefs, spaces }) => {
+  const types = [];
   Object.keys(typeDefs).forEach(key =>
-    convertToGraphDSL(key, typeDefs[key], spaces)
+    convertToGraphDSL(key, typeDefs[key], spaces, types)
   );
   return types.join('\n');
 };
